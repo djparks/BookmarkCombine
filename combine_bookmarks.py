@@ -2,7 +2,7 @@
 Bookmark Combiner for macOS
 This script extracts bookmarks from an exported Safari HTML file and Chrome, 
 merges them, deduplicates by URL, sorts them by title, and saves the result 
-to 'combined_bookmarks.csv' and 'combined_bookmarks.html'.
+to 'combined_bookmarks.csv' and 'bookmarks.html'.
 
 How to execute:
 1. Export your Safari bookmarks:
@@ -136,7 +136,7 @@ def main():
         print(f"Error writing CSV: {e}")
 
     # Save to HTML
-    html_output = 'combined_bookmarks.html'
+    html_output = 'bookmarks.html'
     save_to_html(final_list, html_output)
 
 def save_to_html(bookmarks, output_file):
@@ -153,6 +153,7 @@ def save_to_html(bookmarks, output_file):
             --card-bg: #ffffff;
             --text-main: #1d1d1f;
             --text-muted: #86868b;
+            --border-color: #d2d2d7;
         }}
         body {{
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -179,6 +180,28 @@ def save_to_html(bookmarks, output_file):
         .stats {{
             color: var(--text-muted);
             font-size: 1.1rem;
+            margin-bottom: 25px;
+        }}
+        .search-container {{
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto 40px auto;
+        }}
+        #search-bar {{
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--card-bg);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+        }}
+        #search-bar:focus {{
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }}
         .bookmark-list {{
             list-style: none;
@@ -250,12 +273,42 @@ def save_to_html(bookmarks, output_file):
     <div class="container">
         <header>
             <h1>My Bookmarks</h1>
-            <p class="stats">{count} unique bookmarks combined from Safari and Chrome</p>
+            <p class="stats" id="stats-text">{count} unique bookmarks</p>
+            <div class="search-container">
+                <input type="text" id="search-bar" placeholder="Search by title or URL..." onkeyup="filterBookmarks()">
+            </div>
         </header>
-        <ul class="bookmark-list">
+        <ul class="bookmark-list" id="bookmark-list">
             {items}
         </ul>
     </div>
+
+    <script>
+        function filterBookmarks() {{
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const items = document.querySelectorAll('.bookmark-item');
+            const statsText = document.getElementById('stats-text');
+            let visibleCount = 0;
+
+            items.forEach(item => {{
+                const title = item.querySelector('.bookmark-title').textContent.toLowerCase();
+                const url = item.querySelector('.bookmark-url').textContent.toLowerCase();
+                
+                if (title.includes(query) || url.includes(query)) {{
+                    item.style.display = '';
+                    visibleCount++;
+                }} else {{
+                    item.style.display = 'none';
+                }}
+            }});
+
+            if (query === '') {{
+                statsText.textContent = `{count} unique bookmarks`;
+            }} else {{
+                statsText.textContent = `Showing ${{visibleCount}} of {count} bookmarks`;
+            }}
+        }}
+    </script>
 </body>
 </html>"""
 
